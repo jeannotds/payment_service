@@ -40,15 +40,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          #  Pour éviter les erreurs de cache lors de l'installation des dépendances
-          # preciser le chemin du package-lock.json pour éviter les erreurs de cache
-          cache-dependency-path: ./payment-system/package-lock.json
+          cache-dependency-path: payment-system/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -77,19 +75,20 @@ jobs:
       # - name: Build Docker image
       #   run: docker build -t payment-system-backend .
 
-      # Démarrage des services en mode dev avec un paramètre optionnel pour construire l'image Docker
+      # Docker Compose est à la racine du monorepo (pas dans payment-system)
       - name: Run Docker Compose
+        working-directory: .
         run: docker compose up -d --build
 
-      # Affichage des conteneurs en cours d'exécution pour vérifier que tout a démarré correctement
       - name: Show run containers
+        working-directory: .
         run: docker ps
-      
-      # Affichage des logs des conteneurs pour vérifier que tout a démarré correctement
+
       - name: Show container logs
+        working-directory: .
         run: docker compose logs
-      
-      # Arrêt des services pour nettoyer l'environnement de test
+
       - name: Stop services
+        working-directory: .
         run: docker compose down
 
