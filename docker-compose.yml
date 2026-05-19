@@ -1,0 +1,39 @@
+services:
+  backend:
+    image: payment-system-backend
+    build: 
+      context: ./payment-system
+      dockerfile: Dockerfile.dev
+    container_name: payment-system-backend
+    ports: 
+      - "3001:3000"
+    depends_on:
+      - redis
+      - db
+    volumes:
+      - ./payment-system:/app
+    env_file: 
+      - ./payment-system/.env
+    environment:
+      # Dans le conteneur, utiliser le hostname du service Compose (pas localhost)
+      DATABASE_URL: postgresql://postgres:password@db:5432/payments
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: payment-system-db
+    restart: always
+    volumes:
+      - ./payment-system/db:/var/lib/postgresql/data
+    env_file:
+      - ./payment-system/.env
+    ports:
+      # 5432 est souvent déjà utilisé par Postgres installé sur le Mac — évite le conflit avec Prisma CLI
+      - "5433:5432"
+
+  redis:
+    image: redis:latest
+    container_name: payment-system-redis
+    ports:
+      - "6379:6379"
+    

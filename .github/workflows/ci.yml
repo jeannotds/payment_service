@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test_and_build:
+    runs-on: ubuntu-latest
+
+    # Pour exécuter les commandes dans le répertoire du projet payment-system
+    defaults:
+      run:
+        working-directory: ./payment-system
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: payment_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true" # Pour forcer l'utilisation de Node.js 24 pour les actions JavaScript
+      NEXT_TELEMETRY_DISABLED: "1" # Pour désactiver la telemetry de Next.js (pour ne pas polluer les logs)
+      NODE_OPTIONS: "--max-old-space-size=6144" # Pour augmenter la mémoire disponible pour le build de Next.js
+      # NODE_OPTIONS: "--max_old_space_size=6144" # Pour augmenter la mémoire disponible pour le build de Next.js
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/payment_db    
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+      
+       # ✅ important: attendre que postgres soit prêt
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build Project
+        run: npm run build
+
+    # Construction de l'image Docker
+      # - name: Build Docker image
+      #   run: docker build -t payment-system-backend .
+
+      # Démarrage des services en mode dev avec un paramètre optionnel pour construire l'image Docker
+      - name: Run Docker Compose
+        run: docker compose up -d --build
+
+      # Affichage des conteneurs en cours d'exécution pour vérifier que tout a démarré correctement
+      - name: Show run containers
+        run: docker ps
+      
+      # Affichage des logs des conteneurs pour vérifier que tout a démarré correctement
+      - name: Show container logs
+        run: docker compose logs
+      
+      # Arrêt des services pour nettoyer l'environnement de test
+      - name: Stop services
+        run: docker compose down
+
