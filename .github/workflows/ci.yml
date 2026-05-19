@@ -77,7 +77,11 @@ jobs:
       # - name: Build Docker image
       #   run: docker build -t payment-system-backend .
 
-      # Docker Compose est à la racine du monorepo (pas dans payment-system)
+      # .env n'est pas versionné (secrets) — on le crée pour la CI à partir du modèle
+      - name: Create .env for Docker Compose
+        working-directory: .
+        run: cp payment-system/.env.example payment-system/.env
+
       - name: Run Docker Compose
         working-directory: .
         run: docker compose up -d --build
