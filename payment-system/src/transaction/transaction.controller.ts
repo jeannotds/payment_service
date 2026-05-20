@@ -18,4 +18,16 @@ export class TransactionController {
       amount: createTransactionDto.amount,
     });
   }
+
+  @UseGuards(AuthGuard)
+  @Post('withdraw')
+  async withDraw(
+    @Req() req,
+    @Body() createTransactionDto: CreateTransactionDto,
+  ) {
+    return this.transactionService.withDraw({
+      userId: req.user.sub as string,
+      amount: createTransactionDto.amount,
+    });
+  }
 }

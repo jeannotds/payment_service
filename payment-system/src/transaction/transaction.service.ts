@@ -11,6 +11,7 @@ export class TransactionService {
     private walletService: WalletService,
   ) {}
 
+  // DEPOSIT
   async deposit(createTransactionDto: CreateTransactionDto) {
     const { amount, userId } = createTransactionDto;
 
@@ -39,6 +40,41 @@ export class TransactionService {
       },
     });
 
+    return {
+      wallet: updateWallet,
+      transaction,
+    };
+  }
+
+  async withDraw(createTransactionDto: CreateTransactionDto) {
+    const { amount, userId } = createTransactionDto;
+
+    // chercher wallet
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+    });
+
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    // update balance dans wallet
+    const updateWallet = await this.walletService.decrementBalance(
+      wallet.id as string,
+      amount as number,
+    );
+
+    // create transaction
+    const transaction = await this.prisma.transaction.create({
+      data: {
+        amount,
+        type: TransactionType.WITHDRAW,
+        status: TransactionStatus.SUCCESS,
+        walletId: wallet.id,
+      },
+    });
+
+    // return wallet and transaction for client
     return {
       wallet: updateWallet,
       transaction,

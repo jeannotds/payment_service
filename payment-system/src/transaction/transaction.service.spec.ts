@@ -24,6 +24,12 @@ describe('TransactionService', () => {
             incrementBalance: jest.fn(),
           },
         },
+        {
+          provide: WalletService,
+          useValue: {
+            decrementBalance: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

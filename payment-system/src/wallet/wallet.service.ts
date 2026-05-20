@@ -44,4 +44,15 @@ export class WalletService {
       },
     });
   }
+
+  async decrementBalance(walletId: string, amount: number): Promise<Wallet> {
+    return this.prisma.wallet.update({
+      where: {
+        id: walletId,
+      },
+      data: {
+        balance: { decrement: amount },
+      },
+    });
+  }
 }
