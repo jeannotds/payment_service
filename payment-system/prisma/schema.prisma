@@ -41,7 +41,7 @@ model User {
 model Wallet {
   id String @id @default(uuid())
 
-  balance Decimal @default(0)
+  balance Decimal @default(0) // Solde du wallet (montant disponible)
 
   // relation avec la table user
   userId String @unique
@@ -50,9 +50,28 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  transactions Transaction[]
+
   // // Index pour les queries optimisées par l'ORM Prisma 7 (meilleure performance)
   //   @@index([userId])
   //   @@index([balance])
+}
+
+model Transaction {
+  id String @id @default(uuid())
+
+  amount Decimal
+
+  type   TransactionType   @default(DEPOSIT)
+  status TransactionStatus @default(PENDING)
+
+  reference String? @unique
+
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Enum
@@ -66,4 +85,18 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   BLOCKED
+}
+
+// Enum pour les types de transactions
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+  TRANSFER
+}
+
+// Enum pour les statuts de transactions
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }

@@ -30,4 +30,18 @@ export class WalletService {
       },
     });
   }
+
+  // INCREMENT BALANCE
+  async incrementBalance(walletId: string, amount: number): Promise<Wallet> {
+    return this.prisma.wallet.update({
+      where: {
+        id: walletId,
+      },
+      data: {
+        balance: {
+          increment: amount,
+        },
+      },
+    });
+  }
 }
