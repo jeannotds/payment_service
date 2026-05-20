@@ -23,7 +23,7 @@ describe('TransactionService', () => {
           useValue: {
             incrementBalance: jest.fn(),
           },
-        }
+        },
       ],
     }).compile();
 
