@@ -2,6 +2,7 @@ import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from 'src/dto/transaction.dto';
 import { AuthGuard } from 'src/auth/guards/jwt/jwt.guard';
+import { TransferDto } from 'src/dto/transfer.dto';
 
 @Controller('transactions')
 export class TransactionController {
@@ -29,5 +30,14 @@ export class TransactionController {
       userId: req.user.sub as string,
       amount: createTransactionDto.amount,
     });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('transfer')
+  async transfer(@Req() req, @Body() transferDto: TransferDto) {
+    return this.transactionService.transfer(
+      req.user.sub as string,
+      transferDto,
+    );
   }
 }

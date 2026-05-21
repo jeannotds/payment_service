@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TransactionStatus, TransactionType } from 'generated/prisma/enums';
 import { CreateTransactionDto } from 'src/dto/transaction.dto';
+import { TransferDto } from 'src/dto/transfer.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { WalletService } from 'src/wallet/wallet.service';
 
@@ -79,5 +84,71 @@ export class TransactionService {
       wallet: updateWallet,
       transaction,
     };
+  }
+
+  async transfer(userId: string, transferDto: TransferDto) {
+    const { receiverEmail, amount } = transferDto;
+
+    if (amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // sender wallet
+      const senderWallet = await tx.wallet.findUnique({
+        where: {
+          userId: userId,
+        },
+      });
+
+      if (!senderWallet) {
+        throw new NotFoundException('Sender wallet not found');
+      }
+
+      if (senderWallet.balance.toNumber() < amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      // 2. Receiver user + wallet
+      const receiverUser = await tx.user.findUnique({
+        where: {
+          email: receiverEmail,
+        },
+        include: {
+          wallet: true,
+        },
+      });
+
+      if (!receiverUser || !receiverUser.wallet) {
+        throw new NotFoundException('Receiver wallet not found');
+      }
+
+      // 3. Prevent self-transfer
+      if (senderWallet.userId === receiverUser.id) {
+        throw new BadRequestException('You cannot transfer money to yourself');
+      }
+
+      // 4. Debit sender wallet // Update sender wallet balance
+      await tx.wallet.update({
+        where: { id: senderWallet.id },
+        data: {
+          balance: {
+            decrement: amount,
+          },
+        },
+        // data: { balance: senderWallet.balance.toNumber() - amount },
+      });
+
+      // 5. Credit receiver wallet
+      await tx.wallet.update({
+        where: { id: receiverUser.wallet.id },
+        data: {
+          balance: {
+            increment: amount,
+          },
+        },
+        // data: { balance: receiverUser.wallet.balance.toNumber() + amount },
+      });
+    });
   }
 }
