@@ -9,3 +9,27 @@ export function formatMoney(value: string | number, currency = "USD") {
     minimumFractionDigits: 2,
   }).format(amount);
 }
+
+export function formatDate(value: string) {
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  DEPOSIT: "Dépôt",
+  WITHDRAW: "Retrait",
+  TRANSFER: "Transfert",
+};
+
+export function formatTransactionType(type: string) {
+  return TYPE_LABELS[type] ?? type;
+}
+
+/** Montant affiché avec signe selon le type */
+export function formatTransactionAmount(type: string, amount: string | number) {
+  const formatted = formatMoney(amount);
+  if (type === "DEPOSIT") return `+${formatted}`;
+  return `−${formatted}`;
+}

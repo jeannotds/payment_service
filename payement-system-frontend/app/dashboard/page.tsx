@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { DepositForm } from "@/components/dashboard/deposit-form";
 import { WalletCard } from "@/components/dashboard/wallet-card";
+import { TransactionHistory } from "@/components/dashboard/transaction-history";
 import { WithdrawForm } from "@/components/dashboard/withdraw-form";
 import { ROUTES } from "@/constants/routes";
 import { getWalletApi } from "@/lib/api/wallet";
@@ -19,6 +20,12 @@ export default function DashboardPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [walletLoading, setWalletLoading] = useState(true);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
+  function handleWalletUpdate(wallet: Wallet) {
+    setWallet(wallet);
+    setHistoryRefreshKey((key) => key + 1);
+  }
 
   const loadWallet = useCallback(async () => {
     setWalletLoading(true);
@@ -77,9 +84,13 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <WalletCard wallet={wallet} isLoading={walletLoading} />
         <div className="grid gap-6 lg:grid-cols-2">
-          <DepositForm onSuccess={setWallet} />
-          <WithdrawForm balance={wallet?.balance} onSuccess={setWallet} />
+          <DepositForm onSuccess={handleWalletUpdate} />
+          <WithdrawForm
+            balance={wallet?.balance}
+            onSuccess={handleWalletUpdate}
+          />
         </div>
+        <TransactionHistory refreshKey={historyRefreshKey} />
       </div>
     </DashboardShell>
   );
