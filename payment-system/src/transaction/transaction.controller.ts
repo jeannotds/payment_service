@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  ParseEnumPipe,
   Post,
   Req,
   UseGuards,
