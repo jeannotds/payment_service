@@ -165,7 +165,14 @@ export class TransactionService {
     });
   }
 
-  async getTransactions(userId: string) {
+  async getTransactions(userId: string, page: number, limit: number) {
+    // const skip = (page - 1) * limit;
+    // const take = limit;
+
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, limit);
+    const skip = (safePage - 1) * safeLimit;
+
     const walletUser = await this.prisma.wallet.findUnique({
       where: { userId: userId },
     });
@@ -173,6 +180,12 @@ export class TransactionService {
     if (!walletUser) {
       throw new NotFoundException('Wallet not found');
     }
+
+    const totalTransactions = await this.prisma.transaction.count({
+      where: {
+        walletId: walletUser.id,
+      },
+    });
 
     const transactions = await this.prisma.transaction.findMany({
       where: { walletId: walletUser.id },
@@ -198,8 +211,18 @@ export class TransactionService {
           },
         },
       },
+      skip,
+      take: safeLimit,
     });
 
-    return transactions;
+    return {
+      transactions,
+      meta: {
+        total: totalTransactions,
+        page: safePage,
+        limit: safeLimit,
+        totalPages: Math.ceil(totalTransactions / safeLimit),
+      },
+    };
   }
 }
