@@ -1,16 +1,42 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useState } from "react";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { DepositForm } from "@/components/dashboard/deposit-form";
+import { WalletCard } from "@/components/dashboard/wallet-card";
 import { ROUTES } from "@/constants/routes";
-import { clearSession, getStoredUser } from "@/lib/auth/session";
+import { getWalletApi } from "@/lib/api/wallet";
+import { ApiError } from "@/lib/api/client";
+import { getStoredUser } from "@/lib/auth/session";
 import type { User } from "@/types/api";
+import type { Wallet } from "@/types/transaction";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [walletError, setWalletError] = useState<string | null>(null);
+
+  const loadWallet = useCallback(async () => {
+    setWalletLoading(true);
+    setWalletError(null);
+    try {
+      const data = await getWalletApi();
+      setWallet(data);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        router.replace(ROUTES.signin);
+        return;
+      }
+      setWalletError(
+        err instanceof ApiError ? err.message : "Impossible de charger le wallet.",
+      );
+    } finally {
+      setWalletLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -19,12 +45,8 @@ export default function DashboardPage() {
       return;
     }
     setUser(stored);
-  }, [router]);
-
-  function handleLogout() {
-    clearSession();
-    router.push(ROUTES.signin);
-  }
+    loadWallet();
+  }, [router, loadWallet]);
 
   if (!user) {
     return (
@@ -35,30 +57,26 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-12">
-      <div className="mx-auto max-w-lg rounded-[var(--radius-xl)] border border-border bg-surface p-8 shadow-[var(--shadow-card)]">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Espace connecté
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">
-          Bonjour, {user.name}
+    <DashboardShell user={user}>
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Tableau de bord
         </h1>
-        <p className="mt-2 text-sm text-muted">{user.email}</p>
-        <p className="mt-6 text-sm text-muted">
-          Prochaine étape : wallet, dépôts et transactions.
+        <p className="mt-1 text-sm text-muted">
+          Gérez votre solde et vos opérations.
         </p>
-        <div className="mt-8 flex gap-3">
-          <Button type="button" variant="secondary" onClick={handleLogout}>
-            Se déconnecter
-          </Button>
-          <Link
-            href={ROUTES.home}
-            className="inline-flex h-11 items-center text-sm font-medium text-primary"
-          >
-            Accueil
-          </Link>
-        </div>
       </div>
-    </main>
+
+      {walletError ? (
+        <p className="mb-6 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+          {walletError}
+        </p>
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <WalletCard wallet={wallet} isLoading={walletLoading} />
+        <DepositForm onSuccess={setWallet} />
+      </div>
+    </DashboardShell>
   );
 }
