@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { AuthHeader } from "@/components/auth/auth-layout";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/constants/routes";
+import { loginApi } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
+import { saveSession } from "@/lib/auth/session";
 import { validateSignIn } from "@/lib/validators/auth";
 import type { SignInFormValues } from "@/types/auth";
 
@@ -17,27 +22,47 @@ const initialValues: SignInFormValues = {
 };
 
 export function SignInForm() {
+  const router = useRouter();
   const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState<Partial<Record<keyof SignInFormValues, string>>>(
-    {},
-  );
-  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof SignInFormValues, string>>
+  >({});
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleChange(field: keyof SignInFormValues, value: string) {
     setValues((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
-    setSubmitted(false);
+    setApiError(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validateSignIn(values);
     setErrors(nextErrors);
-
     if (Object.keys(nextErrors).length > 0) return;
 
-    // UI only — branchement API /auth/login plus tard
-    setSubmitted(true);
+    setIsLoading(true);
+    setApiError(null);
+
+    try {
+      // Étape 1 : appel POST /auth/login
+      const data = await loginApi(values);
+
+      // Étape 2 : sauvegarder token + user (pour les routes protégées)
+      saveSession(data.token, data.user);
+
+      // Étape 3 : redirection vers le dashboard
+      router.push(ROUTES.dashboard);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.message);
+      } else {
+        setApiError("Impossible de joindre le serveur. Vérifiez que l'API tourne.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -59,6 +84,7 @@ export function SignInForm() {
             value={values.email}
             onChange={(e) => handleChange("email", e.target.value)}
             error={errors.email}
+            disabled={isLoading}
           />
         </div>
 
@@ -81,18 +107,14 @@ export function SignInForm() {
             value={values.password}
             onChange={(e) => handleChange("password", e.target.value)}
             error={errors.password}
+            disabled={isLoading}
           />
         </div>
 
-        {submitted ? (
-          <p className="rounded-xl border border-primary/30 bg-primary-soft px-4 py-3 text-sm text-foreground">
-            Formulaire valide. L&apos;appel API de connexion sera branché à
-            l&apos;étape suivante.
-          </p>
-        ) : null}
+        {apiError ? <Alert variant="error">{apiError}</Alert> : null}
 
-        <Button type="submit" fullWidth>
-          Se connecter
+        <Button type="submit" fullWidth disabled={isLoading}>
+          {isLoading ? "Connexion…" : "Se connecter"}
         </Button>
       </form>
 

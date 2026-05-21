@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { AuthHeader } from "@/components/auth/auth-layout";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/constants/routes";
+import { signupApi } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
+import { saveSession } from "@/lib/auth/session";
 import { validateSignUp } from "@/lib/validators/auth";
 import type { SignUpFormValues } from "@/types/auth";
 
@@ -19,27 +24,44 @@ const initialValues: SignUpFormValues = {
 };
 
 export function SignUpForm() {
+  const router = useRouter();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<
     Partial<Record<keyof SignUpFormValues, string>>
   >({});
-  const [submitted, setSubmitted] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleChange(field: keyof SignUpFormValues, value: string) {
     setValues((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
-    setSubmitted(false);
+    setApiError(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validateSignUp(values);
     setErrors(nextErrors);
-
     if (Object.keys(nextErrors).length > 0) return;
 
-    // UI only — branchement API /auth/signup plus tard
-    setSubmitted(true);
+    setIsLoading(true);
+    setApiError(null);
+
+    try {
+      // POST /auth/signup — le backend crée user + wallet + renvoie token
+      const data = await signupApi(values);
+
+      saveSession(data.token, data.user);
+      router.push(ROUTES.dashboard);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.message);
+      } else {
+        setApiError("Impossible de joindre le serveur. Vérifiez que l'API tourne.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -61,6 +83,7 @@ export function SignUpForm() {
             value={values.name}
             onChange={(e) => handleChange("name", e.target.value)}
             error={errors.name}
+            disabled={isLoading}
           />
         </div>
 
@@ -75,6 +98,7 @@ export function SignUpForm() {
             value={values.email}
             onChange={(e) => handleChange("email", e.target.value)}
             error={errors.email}
+            disabled={isLoading}
           />
         </div>
 
@@ -89,6 +113,7 @@ export function SignUpForm() {
             value={values.password}
             onChange={(e) => handleChange("password", e.target.value)}
             error={errors.password}
+            disabled={isLoading}
           />
         </div>
 
@@ -103,18 +128,14 @@ export function SignUpForm() {
             value={values.confirmPassword}
             onChange={(e) => handleChange("confirmPassword", e.target.value)}
             error={errors.confirmPassword}
+            disabled={isLoading}
           />
         </div>
 
-        {submitted ? (
-          <p className="rounded-xl border border-primary/30 bg-primary-soft px-4 py-3 text-sm text-foreground">
-            Formulaire valide. L&apos;appel API d&apos;inscription sera branché
-            à l&apos;étape suivante.
-          </p>
-        ) : null}
+        {apiError ? <Alert variant="error">{apiError}</Alert> : null}
 
-        <Button type="submit" fullWidth>
-          Créer mon compte
+        <Button type="submit" fullWidth disabled={isLoading}>
+          {isLoading ? "Création…" : "Créer mon compte"}
         </Button>
       </form>
 
