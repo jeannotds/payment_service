@@ -57,17 +57,13 @@ export class TransactionController {
     @Req() req,
     @Query('page') page = 1,
     @Query('limit') limit = 10,
-    @Query(
-      'type',
-      new ParseEnumPipe(TransactionType, { optional: true }),
-    )
-    type?: TransactionType,
+    @Query('type') type?: TransactionType,
   ) {
     return this.transactionService.getTransactions(
       req.user.sub as string,
       Number(page),
       Number(limit),
-      type,
+      type as TransactionType,
     );
   }
 }

@@ -172,6 +172,8 @@ export class TransactionService {
     limit: number,
     type?: TransactionType,
   ) {
+    // const skip = (page - 1) * limit;
+    // const take = limit;
     const safePage = Math.max(1, page);
     const safeLimit = Math.max(1, limit);
     const skip = (safePage - 1) * safeLimit;
