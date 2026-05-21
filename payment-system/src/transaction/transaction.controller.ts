@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  ParseEnumPipe,
   Post,
   Req,
   UseGuards,
@@ -11,6 +12,7 @@ import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from 'src/dto/transaction.dto';
 import { AuthGuard } from 'src/auth/guards/jwt/jwt.guard';
 import { TransferDto } from 'src/dto/transfer.dto';
+import { TransactionType } from 'generated/prisma/enums';
 
 @Controller('transactions')
 export class TransactionController {
@@ -55,11 +57,17 @@ export class TransactionController {
     @Req() req,
     @Query('page') page = 1,
     @Query('limit') limit = 10,
+    @Query(
+      'type',
+      new ParseEnumPipe(TransactionType, { optional: true }),
+    )
+    type?: TransactionType,
   ) {
     return this.transactionService.getTransactions(
       req.user.sub as string,
       Number(page),
       Number(limit),
+      type,
     );
   }
 }

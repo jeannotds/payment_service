@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from 'generated/prisma/client';
 import { TransactionStatus, TransactionType } from 'generated/prisma/enums';
 import { CreateTransactionDto } from 'src/dto/transaction.dto';
 import { TransferDto } from 'src/dto/transfer.dto';
@@ -165,10 +166,12 @@ export class TransactionService {
     });
   }
 
-  async getTransactions(userId: string, page: number, limit: number) {
-    // const skip = (page - 1) * limit;
-    // const take = limit;
-
+  async getTransactions(
+    userId: string,
+    page: number,
+    limit: number,
+    type?: TransactionType,
+  ) {
     const safePage = Math.max(1, page);
     const safeLimit = Math.max(1, limit);
     const skip = (safePage - 1) * safeLimit;
@@ -181,14 +184,15 @@ export class TransactionService {
       throw new NotFoundException('Wallet not found');
     }
 
-    const totalTransactions = await this.prisma.transaction.count({
-      where: {
-        walletId: walletUser.id,
-      },
-    });
+    const where: Prisma.TransactionWhereInput = {
+      walletId: walletUser.id,
+      ...(type ? { type } : {}),
+    };
+
+    const totalTransactions = await this.prisma.transaction.count({ where });
 
     const transactions = await this.prisma.transaction.findMany({
-      where: { walletId: walletUser.id },
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         wallet: {
