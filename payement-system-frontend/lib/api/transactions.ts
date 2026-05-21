@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api/client";
 import { getAuthToken } from "@/lib/auth/token";
 import type { TransactionTypeFilter } from "@/constants/transactions";
+import type { TransferResponse } from "@/types/transfer";
 import type {
   Transaction,
   TransactionMutationResponse,
@@ -27,6 +28,15 @@ export function withdrawApi(amount: number) {
   return apiRequest<TransactionMutationResponse>("/transactions/withdraw", {
     method: "POST",
     body: { amount },
+    token: getAuthToken(),
+  });
+}
+
+/** POST /transactions/transfer — envoyer de l'argent à un autre utilisateur */
+export function transferApi(receiverEmail: string, amount: number) {
+  return apiRequest<TransferResponse>("/transactions/transfer", {
+    method: "POST",
+    body: { receiverEmail, amount },
     token: getAuthToken(),
   });
 }

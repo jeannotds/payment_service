@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { DepositForm } from "@/components/dashboard/deposit-form";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { TransactionHistory } from "@/components/dashboard/transaction-history";
+import { TransferForm } from "@/components/dashboard/transfer-form";
 import { WithdrawForm } from "@/components/dashboard/withdraw-form";
 import { ROUTES } from "@/constants/routes";
 import { getWalletApi } from "@/lib/api/wallet";
@@ -83,10 +84,15 @@ export default function DashboardPage() {
 
       <div className="space-y-6">
         <WalletCard wallet={wallet} isLoading={walletLoading} />
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-3">
           <DepositForm onSuccess={handleWalletUpdate} />
           <WithdrawForm
             balance={wallet?.balance}
+            onSuccess={handleWalletUpdate}
+          />
+          <TransferForm
+            balance={wallet?.balance}
+            senderEmail={user.email}
             onSuccess={handleWalletUpdate}
           />
         </div>
