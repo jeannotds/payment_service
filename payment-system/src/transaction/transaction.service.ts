@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from 'generated/prisma/client';
 import { TransactionStatus, TransactionType } from 'generated/prisma/enums';
 import { CreateTransactionDto } from 'src/dto/transaction.dto';
 import { TransferDto } from 'src/dto/transfer.dto';
@@ -165,7 +166,18 @@ export class TransactionService {
     });
   }
 
-  async getTransactions(userId: string) {
+  async getTransactions(
+    userId: string,
+    page: number,
+    limit: number,
+    type?: TransactionType,
+  ) {
+    // const skip = (page - 1) * limit;
+    // const take = limit;
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, limit);
+    const skip = (safePage - 1) * safeLimit;
+
     const walletUser = await this.prisma.wallet.findUnique({
       where: { userId: userId },
     });
@@ -174,8 +186,15 @@ export class TransactionService {
       throw new NotFoundException('Wallet not found');
     }
 
+    const where: Prisma.TransactionWhereInput = {
+      walletId: walletUser.id,
+      ...(type ? { type } : {}),
+    };
+
+    const totalTransactions = await this.prisma.transaction.count({ where });
+
     const transactions = await this.prisma.transaction.findMany({
-      where: { walletId: walletUser.id },
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         wallet: {
@@ -198,8 +217,18 @@ export class TransactionService {
           },
         },
       },
+      skip,
+      take: safeLimit,
     });
 
-    return transactions;
+    return {
+      transactions,
+      meta: {
+        total: totalTransactions,
+        page: safePage,
+        limit: safeLimit,
+        totalPages: Math.ceil(totalTransactions / safeLimit),
+      },
+    };
   }
 }

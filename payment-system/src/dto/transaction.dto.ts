@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsNumber, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateTransactionDto {
   @IsNotEmpty()
@@ -10,4 +17,14 @@ export class CreateTransactionDto {
   @IsUUID()
   @IsString()
   userId: string;
+}
+
+export class WhereClauseDto {
+  @IsNotEmpty()
+  @IsString()
+  walletId: string;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
 }
