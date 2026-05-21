@@ -128,7 +128,7 @@ export class TransactionService {
         throw new BadRequestException('You cannot transfer money to yourself');
       }
 
-      // 4. Debit sender wallet // Update sender wallet balance
+      // 4. Debit sender wallet
       await tx.wallet.update({
         where: { id: senderWallet.id },
         data: {
@@ -136,7 +136,6 @@ export class TransactionService {
             decrement: amount,
           },
         },
-        // data: { balance: senderWallet.balance.toNumber() - amount },
       });
 
       // 5. Credit receiver wallet
@@ -147,8 +146,22 @@ export class TransactionService {
             increment: amount,
           },
         },
-        // data: { balance: receiverUser.wallet.balance.toNumber() + amount },
       });
+
+      // 6. Create transaction for sender
+      const transaction = await tx.transaction.create({
+        data: {
+          amount,
+          type: TransactionType.TRANSFER,
+          status: TransactionStatus.SUCCESS,
+          walletId: senderWallet.id,
+        },
+      });
+
+      return {
+        message: 'Transfer successful',
+        transaction,
+      };
     });
   }
 }
