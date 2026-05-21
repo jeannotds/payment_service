@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { DepositForm } from "@/components/dashboard/deposit-form";
 import { WalletCard } from "@/components/dashboard/wallet-card";
+import { WithdrawForm } from "@/components/dashboard/withdraw-form";
 import { ROUTES } from "@/constants/routes";
 import { getWalletApi } from "@/lib/api/wallet";
 import { ApiError } from "@/lib/api/client";
@@ -73,9 +74,12 @@ export default function DashboardPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
         <WalletCard wallet={wallet} isLoading={walletLoading} />
-        <DepositForm onSuccess={setWallet} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <DepositForm onSuccess={setWallet} />
+          <WithdrawForm balance={wallet?.balance} onSuccess={setWallet} />
+        </div>
       </div>
     </DashboardShell>
   );

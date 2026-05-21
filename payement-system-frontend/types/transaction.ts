@@ -17,7 +17,8 @@ export type Transaction = {
   updatedAt: string;
 };
 
-export type DepositResponse = {
+/** Réponse deposit / withdraw (même forme côté backend) */
+export type TransactionMutationResponse = {
   wallet: Wallet;
   transaction: Transaction;
 };
