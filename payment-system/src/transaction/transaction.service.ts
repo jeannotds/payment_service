@@ -164,4 +164,42 @@ export class TransactionService {
       };
     });
   }
+
+  async getTransactions(userId: string) {
+    const walletUser = await this.prisma.wallet.findUnique({
+      where: { userId: userId },
+    });
+
+    if (!walletUser) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: { walletId: walletUser.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        wallet: {
+          select: {
+            userId: true,
+            balance: true,
+            createdAt: true,
+            updatedAt: true,
+            id: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return transactions;
+  }
 }
