@@ -231,4 +231,28 @@ export class TransactionService {
       },
     };
   }
+
+  async getTransactionById(userId: string, transactionId: string) {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+    });
+
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    const transaction = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, walletId: wallet.id as string },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found');
+    }
+
+    if (transaction.walletId !== wallet.id) {
+      throw new BadRequestException('Transaction not found');
+    }
+
+    return transaction;
+  }
 }

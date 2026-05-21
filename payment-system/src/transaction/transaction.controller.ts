@@ -6,6 +6,7 @@ import {
   Req,
   UseGuards,
   Query,
+  Param,
 } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from 'src/dto/transaction.dto';
@@ -63,6 +64,15 @@ export class TransactionController {
       Number(page),
       Number(limit),
       type as TransactionType,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':id')
+  async getTransactionById(@Req() req, @Param('id') transactionId: string) {
+    return this.transactionService.getTransactionById(
+      req.user.sub as string,
+      transactionId,
     );
   }
 }
