@@ -20,10 +20,9 @@ export class CreateTransactionDto {
 }
 
 export class WhereClauseDto {
-  @IsOptional()
-  @IsUUID()
+  @IsNotEmpty()
   @IsString()
-  walletId?: string;
+  walletId: string;
 
   @IsOptional()
   @IsString()
