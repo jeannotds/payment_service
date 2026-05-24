@@ -261,6 +261,25 @@ export class TransactionService {
 
     const transaction = await this.prisma.transaction.findFirst({
       where: { id: transactionId, walletId: wallet.id as string },
+      include: {
+        senderWallet: {
+          select: {
+            id: true,
+            balance: true,
+            userId: true,
+            user: true,
+          },
+        },
+        receiverWallet: {
+          select: {
+            id: true,
+            balance: true,
+            userId: true,
+            user: true,
+          },
+        },
+        wallet: true,
+      },
     });
 
     if (!transaction) {
