@@ -26,6 +26,8 @@ import { APP_GUARD } from '@nestjs/core';
   controllers: [AppController],
   providers: [
     AppService,
+
+    // ThrottlerGuard pour limiter le nombre de requêtes par seconde
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

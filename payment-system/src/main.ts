@@ -5,6 +5,7 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // ValidationPipe pour valider les données des requêtes
   // app.useGlobalPipes(
   //   new ValidationPipe({
   //     whitelist: true, // Supprime les propriétés non définies dans le DTO
@@ -21,6 +22,7 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Helmet pour sécuriser les headers de la réponse HTTP (protection contre les attaques XSS, CSRF, etc.)
   app.use(helmet());
 
   await app.listen(3000);
