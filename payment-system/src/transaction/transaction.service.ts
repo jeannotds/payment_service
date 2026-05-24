@@ -156,6 +156,8 @@ export class TransactionService {
           type: TransactionType.TRANSFER,
           status: TransactionStatus.SUCCESS,
           walletId: senderWallet.id,
+          senderWalletId: senderWallet.id,
+          receiverWalletId: receiverUser.wallet.id,
         },
       });
 

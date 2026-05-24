@@ -52,6 +52,9 @@ model Wallet {
 
   transactions Transaction[]
 
+  receiverTransactions Transaction[] @relation("ReceiverTransactions")
+  senderTransactions Transaction[] @relation("SenderTransactions")
+
   // // Index pour les queries optimisées par l'ORM Prisma 7 (meilleure performance)
   //   @@index([userId])
   //   @@index([balance])
@@ -69,6 +72,12 @@ model Transaction {
 
   walletId String
   wallet   Wallet @relation(fields: [walletId], references: [id])
+
+  senderWalletId   String?
+  senderWallet Wallet? @relation("SenderTransactions", fields: [senderWalletId], references: [id])
+
+  receiverWalletId String?
+  receiverWallet Wallet? @relation("ReceiverTransactions", fields: [receiverWalletId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
