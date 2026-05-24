@@ -218,6 +218,22 @@ export class TransactionService {
             },
           },
         },
+        senderWallet: {
+          select: {
+            id: true,
+            balance: true,
+            userId: true,
+            user: true,
+          },
+        },
+        receiverWallet: {
+          select: {
+            id: true,
+            balance: true,
+            userId: true,
+            user: true,
+          },
+        },
       },
       skip,
       take: safeLimit,
