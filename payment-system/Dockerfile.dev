@@ -1,5 +1,7 @@
 FROM node:20-alpine
-# FROM node:20
+
+# Pour installer openssl sur Alpine Linux (pour la génération des modèles Prisma)
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -20,7 +22,9 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # RUN npm run build
+# RUN npx prisma generate
 
 EXPOSE 3000
 
 CMD ["npm", "run", "start:dev"]
+# CMD ["sh", "-c", "npx prisma generate && npm run start:dev"]

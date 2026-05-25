@@ -9,6 +9,13 @@ generator client {
   output   = "../generated/prisma"
 }
 
+// generator client {
+//   provider      = "prisma-client"
+//   output        = "../generated/prisma"
+//   // Mac (dev local) + Alpine Linux (Docker node:20-alpine)
+//   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+// }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
