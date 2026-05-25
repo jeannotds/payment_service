@@ -17,6 +17,8 @@ services:
     environment:
       # Dans le conteneur, utiliser le hostname du service Compose (pas localhost)
       DATABASE_URL: postgresql://postgres:password@db:5432/payments
+      # Pour générer les modèles Prisma et lancer le serveur en mode développement
+    command: sh -c "npx prisma generate && npm run start:dev" 
     restart: unless-stopped
 
   db:

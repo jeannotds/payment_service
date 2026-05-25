@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -19,6 +20,7 @@ export class TransactionController {
   constructor(private transactionService: TransactionService) {}
 
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
   @Post('deposit')
   async deposit(
     @Req() req,
@@ -31,6 +33,7 @@ export class TransactionController {
   }
 
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
   @Post('withdraw')
   async withDraw(
     @Req() req,
@@ -43,6 +46,7 @@ export class TransactionController {
   }
 
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
   @Post('transfer')
   async transfer(@Req() req, @Body() transferDto: TransferDto) {
     return this.transactionService.transfer(
@@ -52,6 +56,7 @@ export class TransactionController {
   }
 
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
   @Get()
   async getTransactions(
     @Req() req,
@@ -68,6 +73,7 @@ export class TransactionController {
   }
 
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
   @Get(':id')
   async getTransactionById(@Req() req, @Param('id') transactionId: string) {
     return this.transactionService.getTransactionById(

@@ -3,17 +3,20 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/jwt/jwt.guard';
 import { CreateLoginDto, CreateSignupDto } from '../dto/auth.dto';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth } from '@nestjs/swagger';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiBearerAuth('access-token')
   @Post('signup')
   async signup(@Body() createSignupDto: CreateSignupDto) {
     return this.authService.signup(createSignupDto);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiBearerAuth('access-token')
   @Post('login')
   async login(@Body() createLoginDto: CreateLoginDto) {
     return this.authService.login(createLoginDto);
